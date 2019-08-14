@@ -55,6 +55,9 @@ class GraphQL
      */
     private $typeResolution;
 
+    /** @var int */
+    private $queryComplexity = 0;
+
     function __construct()
     {
     }
@@ -244,12 +247,18 @@ class GraphQL
             if (!empty($validationErrors)) {
                 return new ExecutionResult(null, $validationErrors);
             }
+            $this->queryComplexity = $queryComplexity->getQueryComplexity();
             return Executor::execute($schema, $this->currentDocument, $rootValue, $contextValue, $variableValues, $operationName);
         } catch (Error\Error $e) {
             return new ExecutionResult(null, [$e]);
         } finally {
             $this->currentDocument = null;
         }
+    }
+
+    public function getQueryComplexity()
+    {
+        return $this->queryComplexity;
     }
 
     /**

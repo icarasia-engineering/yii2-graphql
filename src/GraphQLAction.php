@@ -56,6 +56,7 @@ class GraphQLAction extends Action
      * ```
      */
     public $checkAccess;
+    public $afterRun;
     /**
      * @var bool whether use Schema validation , and it is recommended only in the development environment
      */
@@ -130,6 +131,12 @@ class GraphQLAction extends Action
     public function removeGraphQlAction($key)
     {
         unset($this->authActions[$key]);
+    }
+
+    public function afterRun()
+    {
+        $fn = $this->afterRun;
+        $fn($this->graphQL);
     }
 
     /**

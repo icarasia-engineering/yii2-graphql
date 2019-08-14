@@ -1,5 +1,7 @@
 Yii2 Graphql Changelog
 =======================
+# 0.13.1
+- add method to get query complexity score
 # 0.13
 - update for graphql-php(v0.13)
 - add graphql-upload(v4.0.0)
