@@ -247,7 +247,6 @@ class GraphQL
             if (!empty($validationErrors)) {
                 return new ExecutionResult(null, $validationErrors);
             }
-            $this->queryComplexity = $queryComplexity->getQueryComplexity();
             return Executor::execute($schema, $this->currentDocument, $rootValue, $contextValue, $variableValues, $operationName);
         } catch (Error\Error $e) {
             return new ExecutionResult(null, [$e]);
@@ -256,9 +255,15 @@ class GraphQL
         }
     }
 
-    public function getQueryComplexity()
+    public function getQueryComplexity($schema, $variableValues)
     {
-        return $this->queryComplexity;
+        /** @var QueryComplexity $queryComplexity */
+        $queryComplexity = DocumentValidator::getRule('QueryComplexity');
+        $queryComplexity->setRawVariableValues($variableValues);
+
+        $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
+
+        return (empty($validationErrors)) ? $queryComplexity->getQueryComplexity() : 0;
     }
 
     /**

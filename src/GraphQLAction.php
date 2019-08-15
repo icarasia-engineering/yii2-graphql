@@ -39,6 +39,7 @@ class GraphQLAction extends Action
     private $query;
     private $variables;
     private $operationName;
+    private $schema;
     /**
      * @var array child graphql actions
      */
@@ -56,6 +57,7 @@ class GraphQLAction extends Action
      * ```
      */
     public $checkAccess;
+    public $beforeRun;
     public $afterRun;
     /**
      * @var bool whether use Schema validation , and it is recommended only in the development environment
@@ -133,10 +135,31 @@ class GraphQLAction extends Action
         unset($this->authActions[$key]);
     }
 
+    /**
+     * build schema with graphQL
+     */
+    private function buildSchema()
+    {
+        $this->schema = $this->graphQL->buildSchema($this->schemaArray === true ? null : $this->schemaArray);
+    }
+
+    public function beforeRun()
+    {
+        $this->buildSchema();
+        if (!empty($this->beforeRun)) {
+            $fn = $this->beforeRun;
+            $queryComplexity = $this->graphQL->getQueryComplexity($this->schema, $this->variables);
+            return $fn($queryComplexity);
+        }
+        return true;
+    }
+
     public function afterRun()
     {
-        $fn = $this->afterRun;
-        $fn($this->graphQL);
+        if (!empty($this->afterRun)) {
+            $fn = $this->afterRun;
+            $fn();
+        }
     }
 
     /**
@@ -151,12 +174,11 @@ class GraphQLAction extends Action
                 $fn($childAction);
             }
         }
-        $schema = $this->graphQL->buildSchema($this->schemaArray === true ? null : $this->schemaArray);
         //TODO the graphql-php's valid too strict,the lazy load has can't pass when execute mutation(must has query node)
 //        if ($this->enableSchemaAssertValid) {
 //            $this->graphQL->assertValid($schema);
 //        }
-        $val = $this->graphQL->execute($schema, null, Yii::$app, $this->variables, $this->operationName);
+        $val = $this->graphQL->execute($this->schema, null, Yii::$app, $this->variables, $this->operationName);
         $result = $this->graphQL->getResult($val);
         return $result;
     }
