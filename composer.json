@@ -30,15 +30,5 @@
         "exclude": [
             "/tests"
         ]
-    },
-    "repositories": [
-        {
-			"type": "vcs",
-			"url": "https://github.com/icarasia-engineering/graphql-php.git"
-		},
-        {
-            "type": "composer",
-            "url": "https://asset-packagist.org"
-        }
-    ]
+    }
 }
