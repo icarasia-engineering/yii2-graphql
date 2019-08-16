@@ -55,8 +55,10 @@ class GraphQL
      */
     private $typeResolution;
 
-    /** @var int */
-    private $queryComplexity = 0;
+    /**
+     * @var bool is document validated
+     */
+    private $isDocumentValidated = false;
 
     function __construct()
     {
@@ -238,20 +240,23 @@ class GraphQL
     public function execute($schema, $rootValue, $contextValue, $variableValues, $operationName)
     {
         try {
-            /** @var QueryComplexity $queryComplexity */
-            $queryComplexity = DocumentValidator::getRule('QueryComplexity');
-            $queryComplexity->setRawVariableValues($variableValues);
+            if (!$this->isDocumentValidated) {
+                /** @var QueryComplexity $queryComplexity */
+                $queryComplexity = DocumentValidator::getRule('QueryComplexity');
+                $queryComplexity->setRawVariableValues($variableValues);
 
-            $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
+                $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
 
-            if (!empty($validationErrors)) {
-                return new ExecutionResult(null, $validationErrors);
+                if (!empty($validationErrors)) {
+                    return new ExecutionResult(null, $validationErrors);
+                }
             }
             return Executor::execute($schema, $this->currentDocument, $rootValue, $contextValue, $variableValues, $operationName);
         } catch (Error\Error $e) {
             return new ExecutionResult(null, [$e]);
         } finally {
             $this->currentDocument = null;
+            $this->isDocumentValidated = false;
         }
     }
 
@@ -263,7 +268,13 @@ class GraphQL
 
         $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
 
-        return (empty($validationErrors)) ? $queryComplexity->getQueryComplexity() : 0;
+        if (!empty($validationErrors)) {
+            $this->isDocumentValidated = false;
+            return 0;
+        } else {
+            $this->isDocumentValidated = true;
+            return $queryComplexity->getQueryComplexity();
+        }
     }
 
     /**
