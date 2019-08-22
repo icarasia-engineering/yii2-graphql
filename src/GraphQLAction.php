@@ -147,9 +147,9 @@ class GraphQLAction extends Action
     {
         $this->buildSchema();
         if (!empty($this->beforeRun)) {
-            $fn = $this->beforeRun;
             $queryComplexity = $this->graphQL->getQueryComplexity($this->schema, $this->variables);
             if (is_numeric($queryComplexity)) {
+                $fn = $this->beforeRun;
                 return $fn($queryComplexity);
             } else {
                 $this->graphQL->getResult($queryComplexity);

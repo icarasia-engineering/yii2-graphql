@@ -262,18 +262,22 @@ class GraphQL
 
     public function getQueryComplexity($schema, $variableValues)
     {
-        /** @var QueryComplexity $queryComplexity */
-        $queryComplexity = DocumentValidator::getRule('QueryComplexity');
-        $queryComplexity->setRawVariableValues($variableValues);
+        try {
+            /** @var QueryComplexity $queryComplexity */
+            $queryComplexity = DocumentValidator::getRule('QueryComplexity');
+            $queryComplexity->setRawVariableValues($variableValues);
 
-        $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
+            $validationErrors = DocumentValidator::validate($schema, $this->currentDocument);
 
-        if (!empty($validationErrors)) {
-            $this->isDocumentValidated = false;
-            return 0;
-        } else {
-            $this->isDocumentValidated = true;
-            return $queryComplexity->getQueryComplexity();
+            if (!empty($validationErrors)) {
+                $this->isDocumentValidated = false;
+                return 0;
+            } else {
+                $this->isDocumentValidated = true;
+                return $queryComplexity->getQueryComplexity();
+            }
+        } catch (Error\Error $e) {
+            return new ExecutionResult(null, [$e]);
         }
     }
 
